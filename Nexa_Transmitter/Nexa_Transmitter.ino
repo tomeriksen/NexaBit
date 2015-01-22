@@ -20,15 +20,15 @@
 
 #define DEBUGTRANSMIT Serial.print("socketOn: ");Serial.println(socketOn);digitalWrite(ledPin, socketOn);Serial.print("Signal: ");Serial.println(signal);Serial.print("toggle: ");Serial.println(toggle);
 
-bool bit2[26]={};              // 26 bit global to store the HE device address.
+bool bit2[26]={};              // 26 bit global to store the Nexa/HE device address.
 //PINS
-int txPin = 4;                 // 433mhz transmitter on pin2
+int txPin = 4;                 // 433mhz transmitter on pin 4
 int ledPin = 13;
 
 //INPUT PINS
-int pushPin = 7;             //simple push pin triggers random transmitter address
-int signalPin = 7;
-int sliderSelectorPin = 3;
+int pushPin = 7;             //simple push pin triggers random transmitter address (not implemented)
+int signalPin = 7;          //analog input signal from prev LittleBit. Treated digitally (HIGH/LOW)
+int sliderSelectorPin = 3;  //Switch with two states: TOGGLE or ON/OFF
 
 boolean socketOn = false;          //the remote socket is considered off to start with
 boolean toggle = false;      //wheteher the circuit should toggle between on/off like a latch
