@@ -13,7 +13,8 @@
  *
  *
  *
- * Thanks to Martyn Henderson for laying out the ground work  http://martgadget.blogspot.com
+ * Thanks to Martyn Henderson for laying out the ground work 
+ * http://martgadget.blogspot.com
  *
  */
 
@@ -48,7 +49,7 @@ void setup()
 
   Serial.println("go");
   
-  itob(senderCode,26);            // convert our device code to binary settinh the bit2 array
+  integerToBitArray(senderCode,26);            // convert our device code to binary settinh the bit2 array
 
   /*transmit(true);            // send ON
   delay(10);                 // wait (socket ignores us it appears unless we do this)
@@ -176,8 +177,8 @@ void sendPair(boolean b) {
   }
 }
 
-
-void itob(unsigned long integer, int length)
+//Hack integer into bits and put into the global bit2[] array
+void integerToBitArray(unsigned long integer, int length)
 {  //needs bit2[length]
   // Convert long device code into binary (stores in global bit2 array.)
  for (int i=0; i<length; i++){
