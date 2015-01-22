@@ -1,38 +1,39 @@
-/*
- * HE300 Automatic Protocol Transmitter 'Simulator'
+/*  
+ * Nexa Automatic Protocol Transmitter 
  *
- * This demo code emits a homeeasy automatic protocol ON message 
- * then 3 seconds later, an off message
+ * This code listens to the SIGnal channel of an LittleBit. On HIGH it
+ * emits a Nexa automatic protocol ON message. When it falls to LOW 
+ * it emits an off message
  *
- * You dont need to learn the Arduino into the socket, because it can 
- * pretend to be a transmitter you already have.
+ * The board also contains a slide selector so the user can switch to TOGGLE mode
+ * In TOGGLE mode the circuit behaves lika a Toggle Latch. It stays in 
+ * the same ON/OFF state even when the SIGnal falls to LOW. 
+ * When SIGnal rises to HIGH the next time it toggles the emition signal
+ * from ON to OFF or OFF to ON
  *
- * Use the Automatic protocol reciever code above to find out
- * your transmitter address 8-)
  *
- * *Only* tested with one HE300 transmitter (HE Address 272946) with its
- * slider switch set to 1 which appears to be 0 in fact.
- * Seems to work with a switch socket (HE302S) and can turn it on and off 
- * without the ardunio being learned into the socket.
  *
- * Martyn Henderson 02/10/2009  http://martgadget.blogspot.com
+ * Thanks to Martyn Henderson for laying out the ground work 
+ * http://martgadget.blogspot.com
  *
- * Cheers to Barnaby and Peter, because without the code above
- * that shows the receiver output this wouldnt have been possible!
- *
- * If you make something cool using HomeEasy and Arduino, please 
- * post back here with a link to your code so we can all enjoy.
  */
 
-
+#define DEBUGTRANSMIT Serial.print("socketOn: ");Serial.println(socketOn);digitalWrite(ledPin, socketOn);Serial.print("Signal: ");Serial.println(signal);Serial.print("toggle: ");Serial.println(toggle);
 
 bool bit2[26]={};              // 26 bit global to store the HE device address.
 //PINS
 int txPin = 4;                 // 433mhz transmitter on pin2
 int ledPin = 13;
-int pushPin = 7;             //simple push pin connected to pin7
 
-boolean on = false;          //the remote socket is considered off to start with
+//INPUT PINS
+int pushPin = 7;             //simple push pin triggers random transmitter address
+int signalPin = 7;
+int sliderSelectorPin = 3;
+
+boolean socketOn = false;          //the remote socket is considered off to start with
+boolean toggle = false;      //wheteher the circuit should toggle between on/off like a latch
+boolean previousSignal = LOW;    //signal from previous bit is threshold at 50%
+
 unsigned long senderCode = 16479282;
 
 void setup()
@@ -41,12 +42,14 @@ void setup()
   pinMode(txPin, OUTPUT);      // transmitter pin.
   pinMode(ledPin, OUTPUT);   
   pinMode(pushPin,INPUT);
+  pinMode(sliderSelectorPin,INPUT);
+  pinMode(signalPin,INPUT);
   
   Serial.begin(9600);         // console port
 
   Serial.println("go");
   
-  itob(senderCode,26);            // convert our device code to binary settinh the bit2 array
+  integerToBitArray(senderCode,26);            // convert our device code to binary settinh the bit2 array
 
   /*transmit(true);            // send ON
   delay(10);                 // wait (socket ignores us it appears unless we do this)
@@ -65,18 +68,38 @@ void setup()
 
 void loop()
 {
-//detect if we click the Puch Button
-  unsigned int t = 0;
-   t = pulseIn(pushPin, HIGH);
-   Serial.println(t);
-   if (t > 1){
-     on = !on;
-     Serial.println(on);
-     digitalWrite(ledPin, on);
-     transmit(on);            // send ON
-     delay(10);                 // wait (socket ignores us it appears unless we do this)
-     transmit(on);            // send ON again
-   }
+//detect slider position
+  
+  int signal = digitalRead(signalPin); //HIGH OR LOW
+  int toggle = digitalRead(sliderSelectorPin);
+  
+  
+  
+  //Detect signal change
+  if (signal != previousSignal){
+   if (signal == HIGH){ //we have a RISE
+    if (toggle){
+      socketOn = !socketOn;
+    }else{
+      socketOn = true;
+    }
+      transmit(socketOn);            // send ON
+      delay(10);                 // wait (socket ignores us it appears unless we do this)
+      transmit(socketOn);            // send ON again
+      
+      DEBUGTRANSMIT;
+   }else{ //LOW - we have a FALL
+     if (!toggle){
+      socketOn = false;
+      transmit(socketOn);            // send ON
+      delay(10);                 // wait (socket ignores us it appears unless we do this)
+      transmit(socketOn);            // send ON again
+      
+      DEBUGTRANSMIT;
+    }
+   } 
+  }
+  previousSignal = signal;
 }
 
 
@@ -154,8 +177,8 @@ void sendPair(boolean b) {
   }
 }
 
-
-void itob(unsigned long integer, int length)
+//Hack integer into bits and put into the global bit2[] array
+void integerToBitArray(unsigned long integer, int length)
 {  //needs bit2[length]
   // Convert long device code into binary (stores in global bit2 array.)
  for (int i=0; i<length; i++){
