@@ -10,7 +10,14 @@
  * the same ON/OFF state even when the SIGnal falls to LOW. 
  * When SIGnal rises to HIGH the next time it toggles the emition signal
  * from ON to OFF or OFF to ON
- *
+ --------------------------------
+ relationship beteween toggle, socketON and toggle:
+ --------------------------------
+ toggle      00000000  1111111111
+ 
+ SIG         00110010  0110011010
+ socketON    00110010  0111100011
+ --------------------------------
  *
  *
  * Thanks to Martyn Henderson for laying out the ground work 
@@ -51,17 +58,7 @@ void setup()
   
   integerToBitArray(senderCode,26);            // convert our device code to binary settinh the bit2 array
 
-  /*transmit(true);            // send ON
-  delay(10);                 // wait (socket ignores us it appears unless we do this)
-  transmit(true);            // send ON again
-
-  delay(3000);               // wait 3 sec
-
-  transmit(false);           // and off again.
-  delay(10);
-  transmit(false);
-
-  digitalWrite(ledPin, LOW);*/
+ 
   Serial.println("stop");    // done.
 
 }
