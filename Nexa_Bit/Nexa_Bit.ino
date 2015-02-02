@@ -24,17 +24,18 @@
  * http://martgadget.blogspot.com
  *
  */
+#include <Arduino.h>
+#include <WProgram.h>
 
-#define DEBUGTRANSMIT Serial.print("socketOn: ");Serial.println(socketOn);digitalWrite(ledPin, socketOn);Serial.print("Signal: ");Serial.println(signal);Serial.print("toggle: ");Serial.println(toggle);
 
 bool bit2[26]={};              // 26 bit global to store the Nexa/HE device address.
 //PINS
-int txPin = 4;                 // 433mhz transmitter on pin 4
-int ledPin = 13;
+int txPin = 1;                 // 433mhz transmitter on pin 1
+int ledPin = 0;
 
 //INPUT PINS
-int pushPin = 7;             //simple push pin triggers random transmitter address (not implemented)
-int signalPin = 7;          //analog input signal from prev LittleBit. Treated digitally (HIGH/LOW)
+int pushPin = 4;             //simple push pin triggers random transmitter address (not implemented)
+int signalPin = 2;          //analog input signal from prev LittleBit. Treated digitally (HIGH/LOW)
 int sliderSelectorPin = 3;  //Switch with two states: TOGGLE or ON/OFF
 
 boolean socketOn = false;          //the remote socket is considered off to start with
@@ -52,14 +53,11 @@ void setup()
   pinMode(sliderSelectorPin,INPUT);
   pinMode(signalPin,INPUT);
   
-  Serial.begin(9600);         // console port
 
-  Serial.println("go");
   
   integerToBitArray(senderCode,26);            // convert our device code to binary settinh the bit2 array
 
  
-  Serial.println("stop");    // done.
 
 }
 
@@ -84,7 +82,6 @@ void loop()
       delay(10);                 // wait (socket ignores us it appears unless we do this)
       transmit(socketOn);            // send ON again
       
-      DEBUGTRANSMIT;
    }else{ //LOW - we have a FALL
      if (!toggle){
       socketOn = false;
@@ -92,18 +89,20 @@ void loop()
       delay(10);                 // wait (socket ignores us it appears unless we do this)
       transmit(socketOn);            // send ON again
       
-      DEBUGTRANSMIT;
     }
    } 
   }
   previousSignal = signal;
+   
+  
 }
 
 
 void transmit(int blnOn)
 {
-  int i;
+  digitalWrite(ledPin, blnOn);   // turn the LED on (HIGH is the voltage level)
 
+  int i;
   // Do the latch sequence.. 
   digitalWrite(txPin, HIGH);
   delayMicroseconds(275);     // bit of radio shouting before we start. 
@@ -161,7 +160,6 @@ void sendBit(boolean b) {
 
 void sendPair(boolean b) {
   // Send the Manchester Encoded data 01 or 10, never 11 or 00
-  //Serial.print(b);
   if(b)
   {
     sendBit(true);
