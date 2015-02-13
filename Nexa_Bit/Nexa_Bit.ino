@@ -34,8 +34,7 @@ int txPin = 1;                 // 433mhz transmitter on pin 1
 int ledPin = 0;
 
 //INPUT PINS
-int pushPin = 4;             //simple push pin triggers random transmitter address (not implemented)
-int signalPin = 2;          //analog input signal from prev LittleBit. Treated digitally (HIGH/LOW)
+int signalPin = 4;          //analog input signal from prev LittleBit. Treated digitally (HIGH/LOW)
 int sliderSelectorPin = 3;  //Switch with two states: TOGGLE or ON/OFF
 
 boolean socketOn = false;          //the remote socket is considered off to start with
@@ -43,18 +42,18 @@ boolean toggle = false;      //wheteher the circuit should toggle between on/off
 boolean previousSignal = LOW;    //signal from previous bit is threshold at 50%
 
 unsigned long senderCode = 16479282;
+unsigned long timeStamp;    //used to resend
 
 void setup()
 {
 
   pinMode(txPin, OUTPUT);      // transmitter pin.
   pinMode(ledPin, OUTPUT);   
-  pinMode(pushPin,INPUT);
   pinMode(sliderSelectorPin,INPUT);
   pinMode(signalPin,INPUT);
   
 
-  
+  timeStamp = millis();
   integerToBitArray(senderCode,26);            // convert our device code to binary settinh the bit2 array
 
  
@@ -63,10 +62,10 @@ void setup()
 
 void loop()
 {
-//detect slider position
-  
   int signal = digitalRead(signalPin); //HIGH OR LOW
+  //detect slider position
   int toggle = digitalRead(sliderSelectorPin);
+  unsigned long now; //currentTime
   
   
   
@@ -78,29 +77,44 @@ void loop()
     }else{
       socketOn = true;
     }
-      transmit(socketOn);            // send ON
-      delay(10);                 // wait (socket ignores us it appears unless we do this)
-      transmit(socketOn);            // send ON again
+      transmit(socketOn);
       
    }else{ //LOW - we have a FALL
      if (!toggle){
       socketOn = false;
-      transmit(socketOn);            // send ON
-      delay(10);                 // wait (socket ignores us it appears unless we do this)
-      transmit(socketOn);            // send ON again
+      transmit(socketOn);
       
     }
    } 
   }
   previousSignal = signal;
-   
+  
+  //resend signal every other second
+  now = millis();
+  if (now-timeStamp > 2000){
+    
+   transmit(socketOn);
+  }
   
 }
 
 
-void transmit(int blnOn)
+
+/* COMMUNICATION FUNCTIONS*/
+
+void transmit (int on)
 {
-  digitalWrite(ledPin, blnOn);   // turn the LED on (HIGH is the voltage level)
+  
+  analogWrite(ledPin, 20+on*225);   // turn the LED on (HIGH is the voltage level)
+  transmit1(on);            // send ON
+    delay(10);                 // wait (socket ignores us it appears unless we do this)
+  transmit1(on);            // send ON again
+  timeStamp = millis();
+  analogWrite(ledPin, 0);
+}
+
+void transmit1(int blnOn)
+{
 
   int i;
   // Do the latch sequence.. 
